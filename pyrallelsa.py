@@ -67,9 +67,13 @@ def runner((id, pcp, psp, serialized_state, minutes, problem_data)):
         annealer = PCCls(state, problem_data)
         auto_schedule = annealer.auto(minutes=minutes)
         annealer.set_schedule(auto_schedule)
-        best_state, best_fitness = annealer.anneal()
+        best_state, best_energy = annealer.anneal()
 
-        return Solution(best_state.serialize(), best_fitness)
+        return Solution(best_state.serialize(), best_energy)
+    except ZeroDivisionError:
+        print("Run {} failed!".format((id, pcp, psp, minutes)))
+        print("".join(traceback.format_exception(*sys.exc_info())))
+        return Solution(state, annealer.energy(state))
     except:
         raise Exception("".join(traceback.format_exception(*sys.exc_info())))
 
