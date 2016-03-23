@@ -53,7 +53,7 @@ Solution = namedtuple('Solution', ['state', 'energy'])
 
 def runner((id, pcp, psp, serialized_state, minutes, problem_data)):
     print("Running subproblem with the following parameters: {}".format(
-        (id, pcp, psp, serialized_state, minutes, problem_data)
+        (id, pcp, psp, minutes)
     ))
     pscls_module = import_module(psp.module)
     PSCls = getattr(pscls_module, psp.cls)
@@ -77,12 +77,11 @@ class ParallelSAManager(object):
     def __init__(self, problem_set):
         self.problem_set = problem_set
 
-    def run(self, minutes):
+    def run(self, minutes, cpus=cpu_count()):
         start = time.time()
-        process_pool = Pool()
+        process_pool = Pool(cpus)
 
         subproblems = list(self.problem_set.divide())
-        cpus = cpu_count()
         available_cpu_time = minutes*cpus
         time_per_task = available_cpu_time/len(subproblems)
 

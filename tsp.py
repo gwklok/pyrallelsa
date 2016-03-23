@@ -2,6 +2,8 @@ import random
 import math
 import json
 
+import time
+
 from pyrallelsa import Annealer
 from pyrallelsa import State
 from pyrallelsa import ProblemSet, ProblemClassPath, ProblemStatePath
@@ -89,6 +91,11 @@ class TSPProblem(Annealer):
         :rtype: State
         """
         return state.copy()
+
+    # XXX
+    def update(self, step, T, E, acceptance, improvement):
+        # Disable printing for now
+        pass
 
 
 class TSPProblemSet(ProblemSet):
