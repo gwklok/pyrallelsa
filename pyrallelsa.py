@@ -2,6 +2,8 @@ from __future__ import division
 
 from abc import abstractmethod, abstractproperty
 import time
+import sys
+import traceback
 from multiprocessing import cpu_count, Pool
 from collections import namedtuple
 from importlib import import_module
@@ -52,21 +54,24 @@ ProblemStatePath = namedtuple('ProblemStatePath', ['module', 'cls'])
 Solution = namedtuple('Solution', ['state', 'energy'])
 
 def runner((id, pcp, psp, serialized_state, minutes, problem_data)):
-    print("Running subproblem with the following parameters: {}".format(
-        (id, pcp, psp, minutes)
-    ))
-    pscls_module = import_module(psp.module)
-    PSCls = getattr(pscls_module, psp.cls)
-    state = PSCls.load(serialized_state)
+    try:
+        print("Running subproblem with the following parameters: {}".format(
+            (id, pcp, psp, minutes)
+        ))
+        pscls_module = import_module(psp.module)
+        PSCls = getattr(pscls_module, psp.cls)
+        state = PSCls.load(serialized_state)
 
-    pccls_module = import_module(pcp.module)
-    PCCls = getattr(pccls_module, pcp.cls)
-    annealer = PCCls(state, problem_data)
-    auto_schedule = annealer.auto(minutes=minutes)
-    annealer.set_schedule(auto_schedule)
-    best_state, best_fitness = annealer.anneal()
+        pccls_module = import_module(pcp.module)
+        PCCls = getattr(pccls_module, pcp.cls)
+        annealer = PCCls(state, problem_data)
+        auto_schedule = annealer.auto(minutes=minutes)
+        annealer.set_schedule(auto_schedule)
+        best_state, best_fitness = annealer.anneal()
 
-    return Solution(best_state.serialize(), best_fitness)
+        return Solution(best_state.serialize(), best_fitness)
+    except:
+        raise Exception("".join(traceback.format_exception(*sys.exc_info())))
 
 
 class ParallelSAManager(object):
