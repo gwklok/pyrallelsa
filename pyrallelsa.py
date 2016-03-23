@@ -53,9 +53,11 @@ ProblemStatePath = namedtuple('ProblemStatePath', ['module', 'cls'])
 Solution = namedtuple('Solution', ['state', 'energy'])
 
 def runner((id, pcp, psp, serialized_state, minutes, problem_data)):
+    print("Started runner")
     pscls_module = import_module(psp.module)
     PSCls = getattr(pscls_module, psp.cls)
     state = PSCls.load(serialized_state)
+    print("State loaded")
 
     pccls_module = import_module(pcp.module)
     PCCls = getattr(pccls_module, pcp.cls)
@@ -79,7 +81,7 @@ class ParallelSAManager(object):
         start = time.time()
         process_pool = Pool()
 
-        subproblems = self.problem_set.divide()
+        subproblems = list(self.problem_set.divide())
         cpus = cpu_count()
         available_cpu_time = minutes*cpus
         time_per_task = available_cpu_time/len(subproblems)
@@ -87,21 +89,28 @@ class ParallelSAManager(object):
         pcp = self.problem_set.pcp
         psp = self.problem_set.psp
         problem_data = self.problem_set.problem_data_str
-        solutions = process_pool.map(
-            runner,
-            [
-                (i, pcp, psp, state.serialize(), time_per_task,
-                 problem_data) for i, state in
-                enumerate(self.problem_set.divide())
-            ]
-        )
 
-        winner = sorted(solutions, key=lambda s: s.fitness, reverse=True)[0]
+        i, state = 0, subproblems[0]
+        args_list = (i, pcp, psp, state.serialize(), time_per_task,
+                     problem_data)
+        print(args_list)
+        runner(args_list)
 
-        print("With an energy of {}; {} was the best.".format(
-            winner.energy,
-            winner.state
-        ))
-        print("Run took {}s".format(time.time() - start))
-
-        return winner
+        # solutions = process_pool.map(
+        #     runner,
+        #     [
+        #         (i, pcp, psp, state.serialize(), time_per_task,
+        #          problem_data) for i, state in
+        #         enumerate(subproblems)
+        #     ]
+        # )
+        #
+        # winner = sorted(solutions, key=lambda s: s.fitness, reverse=True)[0]
+        #
+        # print("With an energy of {}; {} was the best.".format(
+        #     winner.energy,
+        #     winner.state
+        # ))
+        # print("Run took {}s".format(time.time() - start))
+        #
+        # return winner
