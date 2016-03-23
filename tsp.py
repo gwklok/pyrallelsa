@@ -122,4 +122,6 @@ class TSPProblemSet(ProblemSet):
             cities.remove(city)
             random.shuffle(cities)
             route = [self.start_city, city] + cities
+            assert len(set(route)) == len(route)
+            assert len(route) == len(self.cities)
             yield TSPState(route=route, locked_range=2)

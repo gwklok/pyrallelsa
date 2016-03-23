@@ -1,7 +1,6 @@
 from __future__ import division
 
 from abc import abstractmethod, abstractproperty
-import random
 import time
 from multiprocessing import cpu_count, Pool
 from collections import namedtuple
@@ -53,11 +52,12 @@ ProblemStatePath = namedtuple('ProblemStatePath', ['module', 'cls'])
 Solution = namedtuple('Solution', ['state', 'energy'])
 
 def runner((id, pcp, psp, serialized_state, minutes, problem_data)):
-    print("Started runner")
+    print("Running subproblem with the following parameters: {}".format(
+        (id, pcp, psp, serialized_state, minutes, problem_data)
+    ))
     pscls_module = import_module(psp.module)
     PSCls = getattr(pscls_module, psp.cls)
     state = PSCls.load(serialized_state)
-    print("State loaded")
 
     pccls_module = import_module(pcp.module)
     PCCls = getattr(pccls_module, pcp.cls)
@@ -90,27 +90,27 @@ class ParallelSAManager(object):
         psp = self.problem_set.psp
         problem_data = self.problem_set.problem_data_str
 
-        i, state = 0, subproblems[0]
-        args_list = (i, pcp, psp, state.serialize(), time_per_task,
-                     problem_data)
-        print(args_list)
-        runner(args_list)
+        # i, state = 0, subproblems[0]
+        # args_list = (i, pcp, psp, state.serialize(), time_per_task,
+        #              problem_data)
+        # print(args_list)
+        # runner(args_list)
 
-        # solutions = process_pool.map(
-        #     runner,
-        #     [
-        #         (i, pcp, psp, state.serialize(), time_per_task,
-        #          problem_data) for i, state in
-        #         enumerate(subproblems)
-        #     ]
-        # )
-        #
-        # winner = sorted(solutions, key=lambda s: s.fitness, reverse=True)[0]
-        #
-        # print("With an energy of {}; {} was the best.".format(
-        #     winner.energy,
-        #     winner.state
-        # ))
-        # print("Run took {}s".format(time.time() - start))
-        #
-        # return winner
+        solutions = process_pool.map(
+            runner,
+            [
+                (i, pcp, psp, state.serialize(), time_per_task,
+                 problem_data) for i, state in
+                enumerate(subproblems)
+            ]
+        )
+
+        winner = sorted(solutions, key=lambda s: s.energy)[0]
+
+        print("With an energy of {}; {} was the best.".format(
+            winner.energy,
+            winner.state
+        ))
+        print("Run took {}s".format(time.time() - start))
+
+        return winner
