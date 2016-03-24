@@ -4,6 +4,8 @@ import json
 
 import time
 
+from simanneal.anneal import round_figures
+
 from pyrallelsa import Annealer
 from pyrallelsa import State
 from pyrallelsa import ProblemSet, ProblemClassPath, ProblemStatePath
@@ -95,6 +97,84 @@ class TSPProblem(Annealer):
         :rtype: State
         """
         return state.copy()
+
+    def auto(self, minutes, steps=2000, tmax_target_acceptance=0.98,
+             tmin_target_improvement=0.0):
+        """Minimizes the energy of a system by simulated annealing with
+        automatic selection of the temperature schedule.
+
+        Keyword arguments:
+        state -- an initial arrangement of the system
+        minutes -- time to spend annealing (after exploring temperatures)
+        steps -- number of steps to spend on each stage of exploration
+
+        Returns the best state and energy found."""
+
+        def run(T, steps):
+            """Anneals a system at constant temperature and returns the state,
+            energy, rate of acceptance, and rate of improvement."""
+            E = self.energy()
+            prevState = self.copy_state(self.state)
+            prevEnergy = E
+            accepts, improves = 0, 0
+            for step in range(steps):
+                self.move()
+                E = self.energy()
+                dE = E - prevEnergy
+                if dE > 0.0 and math.exp(-dE / T) < random.random():
+                    self.state = self.copy_state(prevState)
+                    E = prevEnergy
+                else:
+                    accepts += 1
+                    if dE < 0.0:
+                        improves += 1
+                    prevState = self.copy_state(self.state)
+                    prevEnergy = E
+            return E, float(accepts) / steps, float(improves) / steps
+
+        step = 0
+        self.start = time.time()
+
+        # Attempting automatic simulated anneal...
+        # Find an initial guess for temperature
+        T = 0.0
+        E = self.energy()
+        self.update(step, T, E, None, None)
+        while T == 0.0:
+            step += 1
+            self.move()
+            T = abs(self.energy() - E)
+
+        # Search for Tmax - a temperature that gives 98% acceptance
+        E, acceptance, improvement = run(T, steps)
+
+        step += steps
+        while acceptance > tmax_target_acceptance:
+            T = round_figures(T / 1.5, 2)
+            E, acceptance, improvement = run(T, steps)
+            step += steps
+            self.update(step, T, E, acceptance, improvement)
+        while acceptance < tmax_target_acceptance:
+            T = round_figures(T * 1.5, 2)
+            E, acceptance, improvement = run(T, steps)
+            step += steps
+            self.update(step, T, E, acceptance, improvement)
+        Tmax = T
+
+        # Search for Tmin - a temperature that gives 0% improvement
+        while improvement > tmin_target_improvement:
+            T = round_figures(T / 1.5, 2)
+            E, acceptance, improvement = run(T, steps)
+            step += steps
+            self.update(step, T, E, acceptance, improvement)
+        Tmin = T
+
+        # Calculate anneal duration
+        elapsed = time.time() - self.start
+        duration = round_figures(int(60.0 * minutes * step / elapsed), 2)
+
+        # Don't perform anneal, just return params
+        return {'tmax': Tmax, 'tmin': Tmin, 'steps': duration}
 
 
 class TSPProblemSet(ProblemSet):

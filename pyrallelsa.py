@@ -67,7 +67,14 @@ def runner((id, pcp, psp, serialized_state, minutes, problem_data,
         pccls_module = import_module(pcp.module)
         PCCls = getattr(pccls_module, pcp.cls)
         annealer = PCCls(state, problem_data)
-        schedule = json.loads(serialized_schedule)
+        if serialized_schedule is None:
+            schedule = annealer.auto(
+                minutes=minutes,
+                tmax_target_acceptance=0.95,
+                tmin_target_improvement=0.05
+            )
+        else:
+            schedule = json.loads(serialized_schedule)
         annealer.set_schedule(schedule)
         best_state, best_energy = annealer.anneal()
 
@@ -90,7 +97,11 @@ def get_auto_schedule((id, pcp, psp, serialized_state, minutes, problem_data)):
     pccls_module = import_module(pcp.module)
     PCCls = getattr(pccls_module, pcp.cls)
     annealer = PCCls(state, problem_data)
-    auto_schedule = annealer.auto(minutes=minutes)
+    auto_schedule = annealer.auto(
+        minutes=minutes,
+        tmax_target_acceptance=0.98,
+        tmin_target_improvement=0.01
+    )
     print("Found schedule: {}".format(auto_schedule))
     return json.dumps(auto_schedule)
 
@@ -121,19 +132,19 @@ class ParallelSAManager(object):
         # print(args_list)
         # runner(args_list)
 
-        schedule = process_pool.map(
-            get_auto_schedule,
-            [
-                (i, pcp, psp, state.serialize(), time_per_task,
-                 problem_data) for i, state in
-                enumerate(subproblems[:1])
-            ]
-        )[0]
+        # schedule = process_pool.map(
+        #     get_auto_schedule,
+        #     [
+        #         (i, pcp, psp, state.serialize(), time_per_task,
+        #          problem_data) for i, state in
+        #         enumerate(subproblems[:1])
+        #     ]
+        # )[0]
         solutions = process_pool.map(
             runner,
             [
                 (i, pcp, psp, state.serialize(), time_per_task,
-                 problem_data, schedule) for i, state in
+                 problem_data, None) for i, state in
                 enumerate(subproblems)
             ]
         )
