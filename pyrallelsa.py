@@ -81,7 +81,8 @@ def runner((id, pcp, psp, serialized_state, minutes, problem_data,
 
 
 def get_auto_schedule((id, pcp, psp, serialized_state, minutes, problem_data)):
-    print("Canary run for finding schedule...")
+    print("Canary run for finding schedule with the following parameters...:"
+      " {}".format((id, pcp, psp, minutes)))
     pscls_module = import_module(psp.module)
     PSCls = getattr(pscls_module, psp.cls)
     state = PSCls.load(serialized_state)

@@ -11,6 +11,8 @@ from pyrallelsa import ProblemSet, ProblemClassPath, ProblemStatePath
 
 class TSPState(State):
 
+    __slots__ = ['route', 'locked_range']
+
     def __init__(self, route, locked_range=0):
         self.route = route
         self.locked_range = locked_range
