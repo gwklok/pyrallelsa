@@ -20,12 +20,11 @@ def get_distance_matrix(cities):
     # create a distance matrix
     distance_matrix = {}
     for ka, va in cities.items():
-        distance_matrix[ka] = {}
         for kb, vb in cities.items():
             if kb == ka:
-                distance_matrix[ka][kb] = 0.0
+                distance_matrix["{},{}".format(ka, kb)] = 0.0
             else:
-                distance_matrix[ka][kb] = distance(va, vb)
+                distance_matrix["{},{}".format(ka, kb)] = distance(va, vb)
     return distance_matrix
 
 
@@ -62,7 +61,7 @@ class TSPProblem(Annealer):
         e = 0
         if self.distance_matrix:
             for i in range(len(route)):
-                e += self.distance_matrix[route[i-1]][route[i]]
+                e += self.distance_matrix["{},{}".format(route[i-1], route[i])]
         else:
             for i in range(len(route)):
                 e += distance(self.cities[route[i-1]], self.cities[route[i]])
@@ -81,6 +80,7 @@ class TSPProblemSet(ProblemSet):
         assert self.start_city in self.cities
         if len(cities) < self.MAX_CITIES_FOR_DISTANCE_MATRIX:
             self.distance_matrix = get_distance_matrix(cities)
+            print("Using distance matrix")
         else:
             self.distance_matrix = None
         self._problem_data = {"cities": self.cities,
