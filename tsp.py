@@ -64,13 +64,6 @@ class TSPProblem(Annealer):
             e += self.distance_matrix[route[i-1]][route[i]]
         return e
 
-    @classmethod
-    def load_state(cls, s):
-        return json.loads(s)
-
-    def dump_state(self):
-        return json.dumps(self.state)
-
 
 class TSPProblemSet(ProblemSet):
     def __init__(self, cities, start_city=None, updates_enabled=False):

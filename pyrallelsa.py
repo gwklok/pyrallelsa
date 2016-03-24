@@ -34,7 +34,15 @@ class State(object):
 
 
 class Annealer(simanneal.Annealer):
-    pass
+
+    @classmethod
+    def load_state(cls, s):
+        return json.loads(s)
+
+    @classmethod
+    def dump_state(cls, state):
+        return json.dumps(state)
+
     # def auto(self, minutes, steps=2000, tmax_target_acceptance=0.98,
     #          tmin_target_improvement=0.0):
     #     """Minimizes the energy of a system by simulated annealing with
@@ -156,9 +164,9 @@ def runner((id, pcp, serialized_state, minutes, problem_data,
         annealer.set_schedule(schedule)
         best_state, best_energy = annealer.anneal()
 
-        return Solution(best_state.serialize(), best_energy)
+        return Solution(PCCls.dump_state(best_state), best_energy)
     except ZeroDivisionError:
-        print("Run {} failed!".format((id, pcp, psp, minutes)))
+        print("Run {} failed!".format((id, pcp, minutes)))
         print("".join(traceback.format_exception(*sys.exc_info())))
         return Solution(state, annealer.energy(state))
     except:
