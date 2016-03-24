@@ -3,8 +3,8 @@ import math
 import json
 
 from pyrallelsa import Annealer
-from pyrallelsa import State
-from pyrallelsa import ProblemSet, ProblemClassPath
+from pyrallelsa import ProblemSet
+from pyrallelsa import ProblemClassPath
 
 
 def distance(a, b):
@@ -85,7 +85,6 @@ class TSPProblemSet(ProblemSet):
     def pcp(self):
         return ProblemClassPath("tsp", "TSPProblem")
 
-
     def divide(self):
         for city in self.cities:
             if city == self.start_city:
@@ -98,6 +97,3 @@ class TSPProblemSet(ProblemSet):
             assert len(set(route)) == len(route)
             assert len(route) == len(self.cities)
             yield route
-
-    # def divide(self):
-    #     yield self.cities.keys()
