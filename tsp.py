@@ -60,17 +60,29 @@ class TSPProblem(Annealer):
         state = self.state if state is None else state
         route = state
         e = 0
-        for i in range(len(route)):
-            e += self.distance_matrix[route[i-1]][route[i]]
+        if self.distance_matrix:
+            for i in range(len(route)):
+                e += self.distance_matrix[route[i-1]][route[i]]
+        else:
+            for i in range(len(route)):
+                e += distance(self.cities[route[i-1]], self.cities[route[i]])
         return e
 
 
 class TSPProblemSet(ProblemSet):
+
+    # We have this because a distance matrix grows exponentially
+    #  and your RAM will die
+    MAX_CITIES_FOR_DISTANCE_MATRIX = 150
+
     def __init__(self, cities, start_city=None, updates_enabled=False):
         self.cities = cities
         self.start_city = self.cities[0] if start_city is None else start_city
         assert self.start_city in self.cities
-        self.distance_matrix = get_distance_matrix(cities)
+        if len(cities) < self.MAX_CITIES_FOR_DISTANCE_MATRIX:
+            self.distance_matrix = get_distance_matrix(cities)
+        else:
+            self.distance_matrix = None
         self._problem_data = {"cities": self.cities,
                               "distance_matrix": self.distance_matrix,
                               "updates_enabled": updates_enabled,
@@ -97,3 +109,6 @@ class TSPProblemSet(ProblemSet):
             assert len(set(route)) == len(route)
             assert len(route) == len(self.cities)
             yield route
+
+    # def divide(self):
+    #     yield self.cities.keys()
