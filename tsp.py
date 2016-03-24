@@ -62,6 +62,8 @@ class TSPProblem(Annealer):
         problem_data = json.loads(problem_data)
         self.cities = problem_data["cities"]
         self.distance_matrix = problem_data["distance_matrix"]
+        if not problem_data["updates_enabled"]:
+            self.update = lambda *args, **kwargs: None
         super(TSPProblem, self).__init__(state)  # important!
 
     def move(self, state=None):
@@ -92,20 +94,16 @@ class TSPProblem(Annealer):
         """
         return state.copy()
 
-    # XXX
-    def update(self, step, T, E, acceptance, improvement):
-        # Disable printing for now
-        pass
-
 
 class TSPProblemSet(ProblemSet):
-    def __init__(self, cities, start_city=None):
+    def __init__(self, cities, start_city=None, updates_enabled=False):
         self.cities = cities
         self.start_city = self.cities[0] if start_city is None else start_city
         assert self.start_city in self.cities
         self.distance_matrix = get_distance_matrix(cities)
         self._problem_data = {"cities": self.cities,
-                              "distance_matrix": self.distance_matrix}
+                              "distance_matrix": self.distance_matrix,
+                              "updates_enabled": updates_enabled}
         self._problem_data_str = json.dumps(self._problem_data)
 
     @property
