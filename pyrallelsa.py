@@ -1,5 +1,6 @@
 from __future__ import division
 
+import json
 from abc import abstractmethod, abstractproperty
 import time
 import sys
@@ -53,7 +54,8 @@ ProblemClassPath = namedtuple('ProblemClassPath', ['module', 'cls'])
 ProblemStatePath = namedtuple('ProblemStatePath', ['module', 'cls'])
 Solution = namedtuple('Solution', ['state', 'energy'])
 
-def runner((id, pcp, psp, serialized_state, minutes, problem_data)):
+def runner((id, pcp, psp, serialized_state, minutes, problem_data,
+            serialized_schedule)):
     try:
         print("Running subproblem with the following parameters: {}".format(
             (id, pcp, psp, minutes)
@@ -65,8 +67,8 @@ def runner((id, pcp, psp, serialized_state, minutes, problem_data)):
         pccls_module = import_module(pcp.module)
         PCCls = getattr(pccls_module, pcp.cls)
         annealer = PCCls(state, problem_data)
-        auto_schedule = annealer.auto(minutes=minutes)
-        annealer.set_schedule(auto_schedule)
+        schedule = json.loads(serialized_schedule)
+        annealer.set_schedule(schedule)
         best_state, best_energy = annealer.anneal()
 
         return Solution(best_state.serialize(), best_energy)
@@ -76,6 +78,20 @@ def runner((id, pcp, psp, serialized_state, minutes, problem_data)):
         return Solution(state, annealer.energy(state))
     except:
         raise Exception("".join(traceback.format_exception(*sys.exc_info())))
+
+
+def get_auto_schedule((id, pcp, psp, serialized_state, minutes, problem_data)):
+    print("Canary run for finding schedule...")
+    pscls_module = import_module(psp.module)
+    PSCls = getattr(pscls_module, psp.cls)
+    state = PSCls.load(serialized_state)
+
+    pccls_module = import_module(pcp.module)
+    PCCls = getattr(pccls_module, pcp.cls)
+    annealer = PCCls(state, problem_data)
+    auto_schedule = annealer.auto(minutes=minutes)
+    print("Found schedule: {}".format(auto_schedule))
+    return json.dumps(auto_schedule)
 
 
 class ParallelSAManager(object):
@@ -104,11 +120,19 @@ class ParallelSAManager(object):
         # print(args_list)
         # runner(args_list)
 
+        schedule = process_pool.map(
+            get_auto_schedule,
+            [
+                (i, pcp, psp, state.serialize(), time_per_task,
+                 problem_data) for i, state in
+                enumerate(subproblems[:1])
+            ]
+        )[0]
         solutions = process_pool.map(
             runner,
             [
                 (i, pcp, psp, state.serialize(), time_per_task,
-                 problem_data) for i, state in
+                 problem_data, schedule) for i, state in
                 enumerate(subproblems)
             ]
         )
