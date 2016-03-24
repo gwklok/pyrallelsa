@@ -225,22 +225,22 @@ class ParallelSAManager(object):
         #         enumerate(subproblems[:1])
         #     ]
         # )[0]
-        # solutions = process_pool.map(
-        #     runner,
-        #     [
-        #         (i, pcp, psp, state.serialize(), time_per_task,
-        #          problem_data, None) for i, state in
-        #         enumerate(subproblems)
-        #     ]
-        # )
+        solutions = process_pool.map(
+            runner,
+            [
+                (i, pcp, json.dumps(state), time_per_task,
+                 problem_data, None) for i, state in
+                enumerate(subproblems)
+            ]
+        )
 
 
-        # winner = sorted(solutions, key=lambda s: s.energy)[0]
+        winner = sorted(solutions, key=lambda s: s.energy)[0]
 
-        state = subproblems[0]
-        # XXX json.dumps(state) should be serialize from the problem
-        winner = runner((0, pcp, json.dumps(state), time_per_task,
-                 problem_data, None))
+        # state = subproblems[0]
+        # # XXX json.dumps(state) should be serialize from the problem
+        # winner = runner((0, pcp, json.dumps(state), time_per_task,
+        #          problem_data, None))
 
 
         print("With an energy of {}; {} was the best.".format(

@@ -74,7 +74,7 @@ class TSPProblemSet(ProblemSet):
         self._problem_data = {"cities": self.cities,
                               "distance_matrix": self.distance_matrix,
                               "updates_enabled": updates_enabled,
-                              "locked_range": 0}
+                              "locked_range": 2}
         self._problem_data_str = json.dumps(self._problem_data)
 
     @property
@@ -86,18 +86,18 @@ class TSPProblemSet(ProblemSet):
         return ProblemClassPath("tsp", "TSPProblem")
 
 
-    # def divide(self):
-    #     for city in self.cities:
-    #         if city == self.start_city:
-    #             continue
-    #         cities = self.cities.keys()
-    #         cities.remove(self.start_city)
-    #         cities.remove(city)
-    #         random.shuffle(cities)
-    #         route = [self.start_city, city] + cities
-    #         assert len(set(route)) == len(route)
-    #         assert len(route) == len(self.cities)
-    #         yield TSPState(route=route, locked_range=2)
-
     def divide(self):
-        yield self.cities.keys()
+        for city in self.cities:
+            if city == self.start_city:
+                continue
+            cities = self.cities.keys()
+            cities.remove(self.start_city)
+            cities.remove(city)
+            random.shuffle(cities)
+            route = [self.start_city, city] + cities
+            assert len(set(route)) == len(route)
+            assert len(route) == len(self.cities)
+            yield route
+
+    # def divide(self):
+    #     yield self.cities.keys()

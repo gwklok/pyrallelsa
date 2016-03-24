@@ -11,7 +11,7 @@ from tsp import TSPProblem, get_distance_matrix
 def main():
     p = TSPProblemSet(cities_120, start_city="Houston", updates_enabled=True)
     psam = ParallelSAManager(p)
-    psam.run(minutes=6.0, cpus=1)
+    psam.run(minutes=6.0, cpus=2)
 
     # cities = cities_120
     # initial_state = cities.keys()
