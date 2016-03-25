@@ -12,6 +12,14 @@ from multiprocessing import cpu_count, Pool
 import simanneal
 
 
+__all__ = [
+    'Problem',
+    'ProblemClassPath',
+    'ParallelSAManager',
+    'Solution'
+]
+
+
 class Problem(simanneal.Annealer):
 
     __metaclass__ = ABCMeta
