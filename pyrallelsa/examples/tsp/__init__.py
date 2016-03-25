@@ -1,10 +1,14 @@
-import random
-import math
 import json
+import math
+import random
+
 import jsonschema
 
-from pyrallelsa import Annealer
-from pyrallelsa import ProblemClassPath
+from pyrallelsa import Problem
+
+
+# https://github.com/perrygeo/simanneal/blob/master/LICENSE.txt
+# https://github.com/perrygeo/simanneal/blob/master/examples/salesman.py
 
 
 def distance(a, b):
@@ -28,7 +32,7 @@ def get_distance_matrix(cities):
     return distance_matrix
 
 
-class TSPProblem(Annealer):
+class TSPProblem(Problem):
     """Traveling Salesman Problem Annealer
 
     :param State|None state: state of the current annealer process; if this
@@ -100,10 +104,6 @@ class TSPProblem(Annealer):
             for i in range(len(route)):
                 e += distance(self.cities[route[i-1]], self.cities[route[i]])
         return e
-
-    @classmethod
-    def pcp(self):
-        return ProblemClassPath("tsp", "TSPProblem")
 
     @classmethod
     def divide(cls, divisions, problem_data):

@@ -1,18 +1,26 @@
-import sys
-import traceback
-import random
-import os
 import json
+import os
+import random
+import sys
 import time
-from abc import abstractmethod, abstractproperty, ABCMeta
-from multiprocessing import cpu_count, Pool
+import traceback
+from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 from importlib import import_module
+from multiprocessing import cpu_count, Pool
 
 import simanneal
 
 
-class Annealer(simanneal.Annealer):
+__all__ = [
+    'Problem',
+    'ProblemClassPath',
+    'ParallelSAManager',
+    'Solution'
+]
+
+
+class Problem(simanneal.Annealer):
 
     __metaclass__ = ABCMeta
 
@@ -23,10 +31,6 @@ class Annealer(simanneal.Annealer):
     @classmethod
     def dump_state(cls, state):
         return json.dumps(state)
-
-    @classmethod
-    def pcp(self):
-        raise NotImplementedError
 
     @classmethod
     def divide(self, divisions, problem_data):
@@ -42,7 +46,6 @@ class Annealer(simanneal.Annealer):
 
 
 ProblemClassPath = namedtuple('ProblemClassPath', ['module', 'cls'])
-
 Solution = namedtuple('Solution', ['state', 'energy'])
 
 
