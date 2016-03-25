@@ -1,9 +1,9 @@
 import random
 import math
 import json
+import jsonschema
 
 from pyrallelsa import Annealer
-from pyrallelsa import ProblemSet
 from pyrallelsa import ProblemClassPath
 
 
@@ -30,18 +30,52 @@ def get_distance_matrix(cities):
 
 class TSPProblem(Annealer):
     """Traveling Salesman Problem Annealer
-    :param dict job_data: Unused currently
-    :param State state: state of the current annealer process
+
+    :param State|None state: state of the current annealer process; if this
+        is None, a new random state will be generated
     """
-    def __init__(self, state, problem_data):
-        problem_data = json.loads(problem_data)
+
+    # We have this because a distance matrix grows exponentially
+    #  and your RAM will die
+    MAX_CITIES_FOR_DISTANCE_MATRIX = 150
+
+    def __init__(self, state=None, **problem_data):
+        self._validate_problem_data(problem_data)
+
         self.cities = problem_data["cities"]
-        self.distance_matrix = problem_data["distance_matrix"]
-        self.locked_range = problem_data["locked_range"]
-        if not problem_data["updates_enabled"]:
+        self.locked_range = int(problem_data.get("locked_range", 2))
+
+        start_city = problem_data.get("start_city")
+        self.start_city = self.cities[0] if start_city is None else start_city
+        assert self.start_city in self.cities
+
+        if not problem_data.get("updates_enabled", False):
             self.update = lambda *args, **kwargs: None
+        if len(self.cities) < self.MAX_CITIES_FOR_DISTANCE_MATRIX:
+            self.distance_matrix = get_distance_matrix(self.cities)
+            print("Using distance matrix")
+        else:
+            self.distance_matrix = None
+
+        if state is None:
+            state = self.cities.keys()
+            random.shuffle(state)
         self.copy_strategy = "slice"
         super(TSPProblem, self).__init__(state)  # important!
+
+    def _validate_problem_data(self, problem_data):
+        schema = {
+            "type": "object",
+            "properties": {
+                "cities": {"type": "object"},
+                "start_city": {"type": "string"},
+                "updates_enabled": {"type": "boolean"},
+                "locked_range": {"type": "number"}
+            },
+            "required": ["cities"]
+        }
+        jsonschema.validate(problem_data, schema)
+
 
     def move(self, state=None):
         """Swaps two cities in the route.
@@ -67,56 +101,34 @@ class TSPProblem(Annealer):
                 e += distance(self.cities[route[i-1]], self.cities[route[i]])
         return e
 
+    @classmethod
+    def pcp(self):
+        return ProblemClassPath("tsp", "TSPProblem")
+
+    @classmethod
+    def divide(cls, divisions, problem_data):
+
+        tspp = TSPProblem(**problem_data)
+
+        def routes_for_subgroup(cs):
+            for city in cs:
+                if city == tspp.start_city:
+                    continue
+                cities = tspp.cities.keys()
+                cities.remove(tspp.start_city)
+                cities.remove(city)
+                random.shuffle(cities)
+                route = [tspp.start_city, city] + cities
+                assert len(set(route)) == len(route)
+                assert len(route) == len(tspp.cities)
+                yield json.dumps(route)
+
+        chunk_size = int(math.ceil(len(tspp.cities) / divisions))
+        for subgroup in chunks(tspp.cities.keys(), chunk_size):
+            yield list(routes_for_subgroup(subgroup))
+
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(l), n):
         yield l[i:i+n]
-
-
-class TSPProblemSet(ProblemSet):
-
-    # We have this because a distance matrix grows exponentially
-    #  and your RAM will die
-    MAX_CITIES_FOR_DISTANCE_MATRIX = 150
-
-    def __init__(self, cities, start_city=None, updates_enabled=False):
-        self.cities = cities
-        self.start_city = self.cities[0] if start_city is None else start_city
-        assert self.start_city in self.cities
-        if len(cities) < self.MAX_CITIES_FOR_DISTANCE_MATRIX:
-            self.distance_matrix = get_distance_matrix(cities)
-            print("Using distance matrix")
-        else:
-            self.distance_matrix = None
-        self._problem_data = {"cities": self.cities,
-                              "distance_matrix": self.distance_matrix,
-                              "updates_enabled": updates_enabled,
-                              "locked_range": 2}
-        self._problem_data_str = json.dumps(self._problem_data)
-
-    @property
-    def problem_data_str(self):
-        return self._problem_data_str
-
-    @property
-    def pcp(self):
-        return ProblemClassPath("tsp", "TSPProblem")
-
-    def divide(self, divisions):
-        def routes_for_subgroup(cs):
-            for city in cs:
-                if city == self.start_city:
-                    continue
-                cities = self.cities.keys()
-                cities.remove(self.start_city)
-                cities.remove(city)
-                random.shuffle(cities)
-                route = [self.start_city, city] + cities
-                assert len(set(route)) == len(route)
-                assert len(route) == len(self.cities)
-                yield json.dumps(route)
-
-        chunk_size = int(math.ceil(len(self.cities) / divisions))
-        for subgroup in chunks(self.cities.keys(), chunk_size):
-            yield list(routes_for_subgroup(subgroup))

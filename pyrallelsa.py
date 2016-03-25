@@ -14,6 +14,8 @@ import simanneal
 
 class Annealer(simanneal.Annealer):
 
+    __metaclass__ = ABCMeta
+
     @classmethod
     def load_state(cls, s):
         return json.loads(s)
@@ -22,21 +24,20 @@ class Annealer(simanneal.Annealer):
     def dump_state(cls, state):
         return json.dumps(state)
 
+    @classmethod
+    def pcp(self):
+        raise NotImplementedError
 
-class ProblemSet(object):
-
-    __metaclass__ = ABCMeta
+    @classmethod
+    def divide(self, divisions, problem_data):
+        raise NotImplementedError
 
     @abstractmethod
-    def divide(self, divisions):
+    def move(self):
         raise NotImplementedError
 
-    @abstractproperty
-    def problem_data_str(self):
-        raise NotImplementedError
-
-    @abstractproperty
-    def pcp(self):
+    @abstractmethod
+    def energy(self):
         raise NotImplementedError
 
 
@@ -55,7 +56,7 @@ def runner((id, pcp, serialized_state, minutes, problem_data,
         pccls_module = import_module(pcp.module)
         PCCls = getattr(pccls_module, pcp.cls)
         state = PCCls.load_state(serialized_state)
-        annealer = PCCls(state, problem_data)
+        annealer = PCCls(state, **json.loads(problem_data))
         if serialized_schedule is None:
             schedule = annealer.auto(
                 minutes=minutes,
@@ -87,25 +88,26 @@ class ParallelSAManager(object):
 
     :type problem_set: ProblemSet
     """
-    def __init__(self, problem_set):
-        self.problem_set = problem_set
+    def __init__(self, pcp, problem_data):
+        self.problem_data = problem_data
+        self.pcp = pcp
 
     def run(self, minutes, cpus=cpu_count()):
         start = time.time()
         process_pool = Pool(cpus)
 
-        subproblem_groups = list(self.problem_set.divide(cpus))
+        pccls_module = import_module(self.pcp.module)
+        PCCls = getattr(pccls_module, self.pcp.cls)
+
+        subproblem_groups = list(PCCls.divide(cpus, self.problem_data))
         available_cpu_time = float(minutes*cpus)
         time_per_group = available_cpu_time/len(subproblem_groups)
-
-        pcp = self.problem_set.pcp
-        problem_data = self.problem_set.problem_data_str
 
         solution_groups = process_pool.map(
             group_runner,
             [
-                (i, pcp, sstates, time_per_group,
-                 problem_data, None) for i, sstates in
+                (i, self.pcp, sstates, time_per_group,
+                 json.dumps(self.problem_data), None) for i, sstates in
                 enumerate(subproblem_groups)
             ]
         )
