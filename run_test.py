@@ -1,6 +1,5 @@
-from tsp import TSPProblem
-from pyrallelsa import ParallelSAManager
-from cities import cities_20, cities_7, cities_120, cities_999
+from pyrallelsa import ParallelSAManager, ProblemClassPath
+from pyrallelsa.examples.tsp.cities import cities_120
 
 
 def main():
@@ -9,7 +8,8 @@ def main():
         start_city="Houston",
         updates_enabled=False
     )
-    psam = ParallelSAManager(TSPProblem.pcp(), problem_data)
+    pcp = ProblemClassPath("pyrallelsa.examples.tsp", "TSPProblem")
+    psam = ParallelSAManager(pcp, problem_data)
     psam.run(minutes=2.0, cpus=3)
 
 
