@@ -68,6 +68,12 @@ class TSPProblem(Annealer):
         return e
 
 
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i+n]
+
+
 class TSPProblemSet(ProblemSet):
 
     # We have this because a distance matrix grows exponentially
@@ -97,18 +103,20 @@ class TSPProblemSet(ProblemSet):
     def pcp(self):
         return ProblemClassPath("tsp", "TSPProblem")
 
-    def divide(self):
-        for city in self.cities:
-            if city == self.start_city:
-                continue
-            cities = self.cities.keys()
-            cities.remove(self.start_city)
-            cities.remove(city)
-            random.shuffle(cities)
-            route = [self.start_city, city] + cities
-            assert len(set(route)) == len(route)
-            assert len(route) == len(self.cities)
-            yield route
+    def divide(self, divisions):
+        def routes_for_subgroup(cs):
+            for city in cs:
+                if city == self.start_city:
+                    continue
+                cities = self.cities.keys()
+                cities.remove(self.start_city)
+                cities.remove(city)
+                random.shuffle(cities)
+                route = [self.start_city, city] + cities
+                assert len(set(route)) == len(route)
+                assert len(route) == len(self.cities)
+                yield json.dumps(route)
 
-    # def divide(self):
-    #     yield self.cities.keys()
+        chunk_size = int(math.ceil(len(self.cities) / divisions))
+        for subgroup in chunks(self.cities.keys(), chunk_size):
+            yield list(routes_for_subgroup(subgroup))
