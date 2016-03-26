@@ -1,7 +1,7 @@
 import os
 import codecs
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def read(filename):
@@ -22,6 +22,6 @@ setup(
     author='Hamza Faran',
     description=('Framework for local parallel simulated annealing'),
     long_description=long_description,
-    packages=['pyrallelsa'],
+    packages=find_packages(),
     install_requires = install_requires
 )

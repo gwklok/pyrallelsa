@@ -37,6 +37,11 @@ class Problem(simanneal.Annealer):
         """Divide the Problem defined by the problem_data into the
         given number of divisions
 
+        Divide should be deterministic in the sense that it returns the
+        same divisions in the same order on multiple calls. This is done
+        because the scheduler does not store division values, but enumeration
+        of the divisions as indices.
+
         :param int divisions: If divisions given is 0, use a default
             number of divisions determined programatically
         :type problem_data: dict
