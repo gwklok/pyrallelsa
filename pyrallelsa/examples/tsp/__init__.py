@@ -123,7 +123,10 @@ class TSPProblem(Problem):
                 assert len(route) == len(tspp.cities)
                 yield json.dumps(route)
 
-        chunk_size = int(math.ceil(len(tspp.cities) / divisions))
+        if divisions:
+            chunk_size = int(math.ceil(len(tspp.cities) / divisions))
+        else:
+            chunk_size = 1
         for subgroup in chunks(tspp.cities.keys(), chunk_size):
             yield list(routes_for_subgroup(subgroup))
 

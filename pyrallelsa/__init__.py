@@ -33,7 +33,14 @@ class Problem(simanneal.Annealer):
         return json.dumps(state)
 
     @classmethod
-    def divide(self, divisions, problem_data):
+    def divide(cls, divisions, problem_data):
+        """Divide the Problem defined by the problem_data into the
+        given number of divisions
+
+        :param int divisions: If divisions given is 0, use a default
+            number of divisions determined programatically
+        :type problem_data: dict
+        """
         raise NotImplementedError
 
     @abstractmethod
