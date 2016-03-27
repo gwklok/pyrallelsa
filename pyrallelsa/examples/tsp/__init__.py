@@ -131,7 +131,9 @@ class TSPProblem(Problem):
         else:
             chunk_size = 1
         for subgroup in chunks(tspp.cities.keys(), chunk_size):
-            yield list(routes_for_subgroup(subgroup))
+            routes = list(routes_for_subgroup(subgroup))
+            if routes:
+                yield routes
 
 
 def chunks(l, n):
