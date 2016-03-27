@@ -107,7 +107,10 @@ class TSPProblem(Problem):
 
     @classmethod
     def divide(cls, divisions, problem_data):
+        """divide
 
+        :type problem_data: dict
+        """
         tspp = TSPProblem(**problem_data)
 
         def routes_for_subgroup(cs):
