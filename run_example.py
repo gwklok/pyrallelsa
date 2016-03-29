@@ -6,7 +6,8 @@ import click
 import time
 
 from pyrallelsa import ParallelSAManager, ProblemClassPath, runner
-from pyrallelsa.examples.tsp.cities import cities_120, cities_20, cities_100, pd_cities_120_alt
+from pyrallelsa.examples.tsp.cities import cities_120, cities_20, cities_100,\
+    pd_cities_120_alt, pd_cities_150_alt
 
 
 @click.command()
@@ -18,8 +19,8 @@ def main(type):
     #     start_city="Bakous",
     #     updates_enabled=True
     # )
-    problem_data = pd_cities_120_alt
-    cities = pd_cities_120_alt['cities']
+    problem_data = pd_cities_150_alt
+    cities = pd_cities_150_alt['cities']
     pcp = ProblemClassPath("pyrallelsa.examples.tsp", "TSPProblem")
 
     if type == 'mc':
