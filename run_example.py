@@ -7,7 +7,7 @@ import time
 
 from pyrallelsa import ParallelSAManager, ProblemClassPath, runner
 from pyrallelsa.examples.tsp.cities import cities_120, cities_20, cities_100,\
-    pd_cities_120_alt, pd_cities_150_alt
+    pd_cities_120_alt, pd_cities_150_alt, pd_cities_200_alt
 
 
 @click.command()
@@ -19,8 +19,8 @@ def main(type):
     #     start_city="Bakous",
     #     updates_enabled=True
     # )
-    problem_data = pd_cities_150_alt
-    cities = pd_cities_150_alt['cities']
+    problem_data = pd_cities_200_alt
+    cities = pd_cities_200_alt['cities']
     pcp = ProblemClassPath("pyrallelsa.examples.tsp", "TSPProblem")
 
     if type == 'mc':
@@ -28,7 +28,7 @@ def main(type):
         psam.run(minutes=2.0, cpus=3)
     elif type == 'seq':
         start = time.time()
-        args = (0, pcp, json.dumps(cities.keys()), 10.0,
+        args = (0, pcp, json.dumps(cities.keys()), 20.0,
                 json.dumps(problem_data), None)
         winner = runner(args)
         print("With an energy of {}; {} was the best.".format(
